@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="27f1eabe-7c4e-484c-876c-2cb101e92333" >
+		<http:listener-connection host="localhost" port="8081" />
+	</http:listener-config>
+	<flow name="raiseerrorFlow" doc:id="152be6c0-ce1a-43ac-b1ea-0cca17c867bc" >
+		<http:listener doc:name="Listener" doc:id="8d1d1ef9-2cc0-4146-a8e4-f2e98b534f1f" config-ref="HTTP_Listener_config" path="/raise"/>
+		<choice doc:name="Choice" doc:id="a499d165-2152-4ac4-b379-746ba1cfcb37" >
+			<when expression="#[isEmpty(payload.ename)]">
+				<raise-error doc:name="Raise error" doc:id="941c47c4-2da1-4236-b280-0cae33ad523d" type="EMPLOYEE:INVALIDRECORD" description="ENAME IS NULL"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="aa125a53-d937-4cdb-b713-ba56319bb255" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/JSON
+---
+{
+	"MESSAGE":"employ data submitted sucssfully"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="823d552a-7aed-4394-84ad-b93278daf244" >
+				<ee:transform doc:name="Transform Message" doc:id="364f6d2e-9b0f-4abd-a506-1ece6628c081" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"errormessage":	error.description,
+	"description":error.detailedDescription
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
